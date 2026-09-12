@@ -62,7 +62,7 @@ def downloadElevation(minGPSPoint: GPSPoint, maxGPSPoint: GPSPoint, outputPath: 
 # Calls an endpoint from Nominatim API to retrieve the bounding box of a given city
 def getCityBoundingBox(city: str) -> tuple[GPSPoint, GPSPoint]:
     try:
-        cachePath: Path = Path("./data/cities_bounding_boxes.json")
+        cachePath: Path = Path("./cities_bounding_boxes.json")
 
         # Load cached bounding boxes if available
         if cachePath.exists():

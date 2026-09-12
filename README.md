@@ -1,6 +1,6 @@
 # EVGen
 
-**EVGen** is a modular Python framework for generating virtual electric vehicle consumption datasets through [SUMO (Simulation of Urban MObility)](https://www.eclipse.org/sumo/). It provides a command-line interface (CLI) for configuring and executing different data generation scenarios.
+**EVGen** is a software framework for generating virtual electric vehicle consumption datasets through [SUMO (Simulation of Urban MObility)](https://www.eclipse.org/sumo/). It provides a command-line interface (CLI) for configuring and executing different data generation scenarios.
 
 The tool supports different simulation scenarios and can either enrich existing trajectory datasets with simulated electric-vehicle consumption data or generate completely synthetic datasets from a given city or custom geographical area.
 
@@ -562,6 +562,8 @@ When this option is specified, the tool also assumes that the SUMO network alrea
 Consequently, `--skip-route-generation` does not need to be combined with `--skip-net-generation`.
 
 This option is useful when both the required network and routes have already been generated and should be reused.
+
+This option can also be specified in validation mode, when the routes have already been generated. In validation mode, the network is predefined and does not need to be generated.
 
 ### Important when using the `dataset` scenario
 

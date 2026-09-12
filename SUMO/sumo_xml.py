@@ -31,7 +31,7 @@ def setupSUMOConfig():
         trajectoryCount = 5000
 
         while trajectoryCount < args.trajectories_number:
-            endValue += 30000
+            endValue += 50000
             trajectoryCount += 5000
 
     # Create SUMO configuration
