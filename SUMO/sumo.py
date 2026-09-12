@@ -12,7 +12,7 @@ from custom_types import GPSPoint, CustomVehicle, SUMOTrip, SUMOVehicleExtraData
 
 from SUMO.sumo_paths import configPath, customPath
 from SUMO.sumo_network import loadSUMONetwork
-from SUMO.sumo_xml import setupSUMOConfig, setupDuarouterConfig, generateSUMOTrips, addExtraToSUMOVehicles, finalizeRandomSUMOVehicles, readSUMOBatteryOut, getSUMOSimulationStats
+from SUMO.sumo_xml import setupSUMOConfig, setupDuarouterConfig, setupVehicleTypes, generateSUMOTrips, addExtraToSUMOVehicles, finalizeRandomSUMOVehicles, readSUMOBatteryOut, getSUMOSimulationStats
 
 # Generates a 3D SUMO net using osmGet, osmBuild and netconvert based on the bounding box specified by given GPSPoints
 def generateSUMO3DNet(minGPSPoint: GPSPoint, maxGPSPoint: GPSPoint):
@@ -124,9 +124,10 @@ def generateRoutes(trajectories: pd.DataFrame, SUMOvehicleTypes: dict[float, str
     sumoTrips: list[SUMOTrip] = []
     vehiclesExtra: dict[str, SUMOVehicleExtraData] = {}
 
-    # Configure duarouter config file if not in validation mode
+    # Configure duarouter config file and vehicle types additional file if not in validation mode
     if not args.validation:
         setupDuarouterConfig()
+        setupVehicleTypes()
 
     # Set current depart
     currentDepart: float = 0.00
@@ -203,6 +204,10 @@ def generateRandomRoutes(numberofTrajectories: int = 5000, customVehicle: Custom
 
     sumoHome = Path(sumoHomePath)
 
+    # Configure vehicle types additional file if not in validation mode
+    if not args.validation:
+        setupVehicleTypes()
+
     # Config files paths
     scenarioPath = configPath / scenarioName
     sumo3DNetFile = scenarioPath / f"{scenarioName}_3D.net.xml"
@@ -248,7 +253,7 @@ def generateRandomRoutes(numberofTrajectories: int = 5000, customVehicle: Custom
 
 # Run SUMO simulation
 def runSimulation():
-    # Configure SUMO config file based validation or scenario mode
+    # Configure SUMO config file based on validation or scenario mode
     if args.validation:
         configFileName = "osm.sumocfg"
     else:

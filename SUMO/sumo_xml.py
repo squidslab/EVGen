@@ -8,8 +8,9 @@ from custom_types import CustomVehicle, SUMOTrip, SUMOVehicleExtraData, SUMOBatt
 from SUMO.sumo_paths import configPath, customPath, outputPath
 from SUMO.sumo_network import getLanePositionOnEdge, getLanePositionFromEdgeList
 
-# Sets up SUMO config files based on the specified scenario
+# Sets up SUMO config file based on the specified scenario
 def setupSUMOConfig():
+    scenario = args.scenario
     scenarioName = args.scenario_name
 
     sumoConfigFilePath = configPath / "scenario.sumocfg"
@@ -22,51 +23,141 @@ def setupSUMOConfig():
     # Create scenario-specific output directory
     scenarioOutputPath.mkdir(parents=True)
 
-    # Parse SUMO configuration
-    sumoConfigFile = ET.parse(sumoConfigFilePath)
-    sumoConfiguration = sumoConfigFile.getroot()
+    # Configure simulation end time based on current scenario
+    if scenario == "dataset":
+        endValue = 50000
+    else:
+        endValue = 50000
+        trajectoryCount = 5000
 
-    # Retrieve configuration elements
-    inputConfig = sumoConfiguration.find("./input")
-    outputConfig = sumoConfiguration.find("./output")
+        while trajectoryCount < args.trajectories_number:
+            endValue += 30000
+            trajectoryCount += 5000
 
-    if inputConfig is None:
-        raise RuntimeError("Could not find input section in scenario.sumocfg")
+    # Create SUMO configuration
+    sumoConfiguration = ET.Element("sumoConfiguration")
 
-    if outputConfig is None:
-        raise RuntimeError("Could not find output section in scenario.sumocfg")
+    inputConfig = ET.SubElement(sumoConfiguration, "input")
 
-    netFile = inputConfig.find("./net-file")
-    routeFiles = inputConfig.find("./route-files")
-    tripInfoOutput = outputConfig.find("./tripinfo-output")
-
-    if netFile is None:
-        raise RuntimeError("Could not find net-file in scenario.sumocfg")
-
-    if routeFiles is None:
-        raise RuntimeError("Could not find route-files in scenario.sumocfg")
-
-    if tripInfoOutput is None:
-        raise RuntimeError(
-            "Could not find tripinfo-output in scenario.sumocfg")
-
-    # Configure scenario-specific paths
-    netFile.set(
-        "value",
-        f"./{scenarioName}/{scenarioName}_3D.net.xml"
+    ET.SubElement(
+        inputConfig,
+        "net-file",
+        {"value": f"./{scenarioName}/{scenarioName}_3D.net.xml"}
     )
 
-    routeFiles.set(
-        "value",
-        f"../custom/{scenarioName}/custom.rou.xml"
+    ET.SubElement(
+        inputConfig,
+        "route-files",
+        {"value": f"../custom/{scenarioName}/custom.rou.xml"}
     )
 
-    tripInfoOutput.set(
-        "value",
-        f"../output/{scenarioName}/tripinfos.xml"
+    ET.SubElement(
+        inputConfig,
+        "additional-files",
+        {"value": "../custom/vehicle_types.add.xml"}
     )
 
-    # Save updated configuration
+    outputConfig = ET.SubElement(sumoConfiguration, "output")
+
+    ET.SubElement(
+        outputConfig,
+        "tripinfo-output",
+        {"value": f"../output/{scenarioName}/tripinfos.xml"}
+    )
+
+    timeConfig = ET.SubElement(sumoConfiguration, "time")
+
+    ET.SubElement(
+        timeConfig,
+        "step-length",
+        {"value": "1.0"}
+    )
+
+    ET.SubElement(
+        timeConfig,
+        "end",
+        {"value": f"{endValue:.2f}"}
+    )
+
+    processingConfig = ET.SubElement(
+        sumoConfiguration,
+        "processing"
+    )
+
+    ET.SubElement(
+        processingConfig,
+        "seed",
+        {"value": "42"}
+    )
+
+    ET.SubElement(
+        processingConfig,
+        "threads",
+        {"value": "1"}
+    )
+
+    ET.SubElement(
+        processingConfig,
+        "ignore-route-errors",
+        {"value": "true"}
+    )
+
+    ET.SubElement(
+        processingConfig,
+        "tls.actuated.jam-threshold",
+        {"value": "30"}
+    )
+
+    ET.SubElement(
+        processingConfig,
+        "collision.action",
+        {"value": "none"}
+    )
+
+    routingConfig = ET.SubElement(
+        sumoConfiguration,
+        "routing"
+    )
+
+    ET.SubElement(
+        routingConfig,
+        "device.rerouting.adaptation-steps",
+        {"value": "18"}
+    )
+
+    ET.SubElement(
+        routingConfig,
+        "device.rerouting.adaptation-interval",
+        {"value": "10"}
+    )
+
+    reportConfig = ET.SubElement(
+        sumoConfiguration,
+        "report"
+    )
+
+    ET.SubElement(
+        reportConfig,
+        "verbose",
+        {"value": "true"}
+    )
+
+    ET.SubElement(
+        reportConfig,
+        "duration-log.statistics",
+        {"value": "true"}
+    )
+
+    ET.SubElement(
+        reportConfig,
+        "no-step-log",
+        {"value": "true"}
+    )
+
+    # Save SUMO configuration
+    sumoConfigFile = ET.ElementTree(sumoConfiguration)
+    ET.indent(sumoConfigFile, space="    ")
+
     sumoConfigFile.write(
         sumoConfigFilePath,
         encoding="UTF-8",
@@ -87,43 +178,310 @@ def setupDuarouterConfig():
     # Create scenario-specific custom directory
     scenarioCustomPath.mkdir(parents=True)
 
-    # Parse duarouter configuration
-    duarouterConfigFile = ET.parse(duarouterConfigFilePath)
-    duarouterConfiguration = duarouterConfigFile.getroot()
+    # Create duarouter configuration
+    duarouterConfiguration = ET.Element("duarouterConfiguration")
 
-    # Retrieve configuration elements
-    inputConfig = duarouterConfiguration.find("./input")
-    outputConfig = duarouterConfiguration.find("./output")
+    inputConfig = ET.SubElement(duarouterConfiguration, "input")
 
-    if inputConfig is None:
-        raise RuntimeError("Could not find input section in custom.duarcfg")
-
-    if outputConfig is None:
-        raise RuntimeError("Could not find output section in custom.duarcfg")
-
-    netFile = inputConfig.find("./net-file")
-    outputFile = outputConfig.find("./output-file")
-
-    if netFile is None:
-        raise RuntimeError("Could not find net-file in custom.duarcfg")
-
-    if outputFile is None:
-        raise RuntimeError("Could not find output-file in custom.duarcfg")
-
-    # Configure scenario-specific paths
-    netFile.set(
-        "value",
-        f"../config/{scenarioName}/{scenarioName}_3D.net.xml"
+    ET.SubElement(
+        inputConfig,
+        "net-file",
+        {"value": f"../config/{scenarioName}/{scenarioName}_3D.net.xml"}
     )
 
-    outputFile.set(
-        "value",
-        f"./{scenarioName}/custom.rou.xml"
+    ET.SubElement(
+        inputConfig,
+        "route-files",
+        {"value": "./custom.trips.xml"}
     )
 
-    # Save updated configuration
+    outputConfig = ET.SubElement(duarouterConfiguration, "output")
+
+    ET.SubElement(
+        outputConfig,
+        "output-file",
+        {"value": f"./{scenarioName}/custom.rou.xml"}
+    )
+
+    processingConfig = ET.SubElement(
+        duarouterConfiguration,
+        "processing"
+    )
+
+    ET.SubElement(
+        processingConfig,
+        "seed",
+        {"value": "42"}
+    )
+
+    # Save duarouter configuration
+    duarouterConfigFile = ET.ElementTree(duarouterConfiguration)
+    ET.indent(duarouterConfigFile, space="    ")
+
     duarouterConfigFile.write(
         duarouterConfigFilePath,
+        encoding="UTF-8",
+        xml_declaration=True
+    )
+
+# Sets up vehicle types additional file if it does not exist
+def setupVehicleTypes():
+    vehicleTypesFilePath = customPath / "vehicle_types.add.xml"
+
+    if vehicleTypesFilePath.exists():
+        return
+
+    # Create vehicle types configuration
+    additional = ET.Element("additional")
+
+    # Generic EV type
+    evGeneric = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "ev_generic",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "mass": "1800",
+            "accel": "2.5",
+            "decel": "3.0",
+            "maxSpeed": "44.44",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        evGeneric,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        evGeneric,
+        "param",
+        {"key": "device.battery.capacity", "value": "60000"}
+    )
+
+    # Custom EV type (Configurable by user)
+    customEv = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "custom_ev",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "mass": "1700.0",
+            "accel": "3.0",
+            "decel": "3.0",
+            "maxSpeed": "52.78",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        customEv,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        customEv,
+        "param",
+        {"key": "device.battery.capacity", "value": "80000.0"}
+    )
+
+    # Predefined EV type: 2013 Nissan Leaf SV
+    leaf2013 = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "leaf_2013",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "length": "4.445",
+            "width": "1.770",
+            "height": "1.550",
+            "mass": "1493",
+            "accel": "2.71",
+            "decel": "3.0",
+            "maxSpeed": "40.27",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        leaf2013,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        leaf2013,
+        "param",
+        {"key": "device.battery.capacity", "value": "21400"}
+    )
+
+    # Predefined EV type: Tesla Model Y Premium RWD (Juniper, LG 5L)
+    teslaModelY = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "tesla_model_y",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "length": "4.790",
+            "width": "1.982",
+            "height": "1.624",
+            "mass": "1976",
+            "accel": "4.96",
+            "decel": "3.0",
+            "maxSpeed": "55.83",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        teslaModelY,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        teslaModelY,
+        "param",
+        {"key": "device.battery.capacity", "value": "75000"}
+    )
+
+    # Predefined EV type: Tesla Model 3 RWD
+    teslaModel3 = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "tesla_model_3",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "length": "4.720",
+            "width": "1.850",
+            "height": "1.440",
+            "mass": "1847",
+            "accel": "4.48",
+            "decel": "3.0",
+            "maxSpeed": "55.83",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        teslaModel3,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        teslaModel3,
+        "param",
+        {"key": "device.battery.capacity", "value": "60000"}
+    )
+
+    # Predefined EV type: Chevrolet Equinox EV 2025 LT FWD
+    chevroletEquinoxEV = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "chevrolet_equinox_ev",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "length": "4.867",
+            "width": "1.954",
+            "height": "1.646",
+            "mass": "2233",
+            "accel": "3.97",
+            "decel": "3.0",
+            "maxSpeed": "52.77",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        chevroletEquinoxEV,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        chevroletEquinoxEV,
+        "param",
+        {"key": "device.battery.capacity", "value": "85000"}
+    )
+
+    # Predefined EV type: Ford Mustang Mach-E 2025 Select RWD Standard Range
+    fordMustangMachE = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "ford_mustang_mach_e",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "length": "4.713",
+            "width": "1.881",
+            "height": "1.624",
+            "mass": "2175",
+            "accel": "4.48",
+            "decel": "3.0",
+            "maxSpeed": "50.0",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        fordMustangMachE,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        fordMustangMachE,
+        "param",
+        {"key": "device.battery.capacity", "value": "72600"}
+    )
+
+    # Predefined EV type: Hyundai IONIQ 5 Standard 2WD / 63 kWh RWD
+    hyundaiIoniq5 = ET.SubElement(
+        additional,
+        "vType",
+        {
+            "id": "hyundai_ioniq_5",
+            "vClass": "passenger",
+            "emissionClass": "Energy",
+            "length": "4.655",
+            "width": "1.890",
+            "height": "1.605",
+            "mass": "1955",
+            "accel": "3.27",
+            "decel": "3.0",
+            "maxSpeed": "51.38",
+            "sigma": "1"
+        }
+    )
+
+    ET.SubElement(
+        hyundaiIoniq5,
+        "param",
+        {"key": "has.battery.device", "value": "true"}
+    )
+
+    ET.SubElement(
+        hyundaiIoniq5,
+        "param",
+        {"key": "device.battery.capacity", "value": "63000"}
+    )
+
+    # Save vehicle types configuration
+    vehicleTypesFile = ET.ElementTree(additional)
+    ET.indent(vehicleTypesFile, space="    ")
+
+    vehicleTypesFile.write(
+        vehicleTypesFilePath,
         encoding="UTF-8",
         xml_declaration=True
     )

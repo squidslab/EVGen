@@ -2,6 +2,28 @@ import argparse
 
 from custom_types import GPSPoint, CustomVehicle
 
+# Checks if an int argument is positive
+def positiveInteger(intArg: str) -> int:
+    integerValue = int(intArg)
+
+    if integerValue <= 0:
+        raise argparse.ArgumentTypeError(
+            "Value must be a positive integer"
+        )
+
+    return integerValue
+
+# Checks if a float argument is positive
+def positiveFloat(floatArg: str) -> float:
+    floatValue = float(floatArg)
+
+    if floatValue <= 0:
+        raise argparse.ArgumentTypeError(
+            "Value must be a positive integer"
+        )
+
+    return floatValue
+
 # Parses the scenario bouding box string argument into an internal rappresentation
 def parseBoundingBox(boundingBoxArg: str) -> tuple[GPSPoint, GPSPoint]:
     try:
@@ -168,7 +190,7 @@ parser.add_argument(
 # Scenario-specific arguments
 parser.add_argument(
     "--trajectory-batch",
-    type=int,
+    type=positiveInteger,
     default=1,
     help="Batch of trajectories to process (15,000 trajectories per batch). "
          "Only applicable to the 'dataset' scenario."
@@ -176,7 +198,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--trajectories-number",
-    type=int,
+    type=positiveInteger,
     default=5000,
     help="Number of random trajectories to generate. "
          "Only applicable to the 'city' and 'area' scenarios."
@@ -223,7 +245,7 @@ parser.add_argument(
 # Depart delay argument
 parser.add_argument(
     "--depart-delay",
-    type=float,
+    type=positiveFloat,
     default=0,
     help="Delay between each simulated vehicle departure."
 )

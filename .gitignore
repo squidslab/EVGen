@@ -28,12 +28,11 @@ SUMO/sumo_files_validation/output/*
 
 # Keep required SUMO configuration files
 !SUMO/sumo_files/config/
-!SUMO/sumo_files/config/scenario.sumocfg
+!SUMO/sumo_files/config/.gitkeep
 
 # Keep required SUMO custom files
 !SUMO/sumo_files/custom/
-!SUMO/sumo_files/custom/custom.duarcfg
-!SUMO/sumo_files/custom/vehicle_types.add.xml
+!SUMO/sumo_files/custom/.gitkeep
 
 # Keep SUMO output directory
 !SUMO/sumo_files/output/
