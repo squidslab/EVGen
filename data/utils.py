@@ -171,7 +171,10 @@ def buildTrajectoryDataframe(trajectories: list[Trajectory], includeSpeedData: b
             "trajectoryId": trajectory.trajectoryId,
             "startpoint": trajectory.samples[0].point,
             "endpoint": trajectory.samples[-1].point,
-            "waypoints": findWaypoints(trajectory.samples)
+            "waypoints": findWaypoints(trajectory.samples),
+            "startSpeed": None,
+            "endSpeed": None,
+            "stops": None
         }
 
         if includeSpeedData:

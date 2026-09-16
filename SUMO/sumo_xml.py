@@ -615,10 +615,10 @@ def generateSUMOTrips(sumoTrips: list[SUMOTrip]):
             "viaLonLat": sumoTrip.viaLonLat,
         }
 
-        if not math.isnan(sumoTrip.startSpeed):
+        if sumoTrip.startSpeed is not None and not math.isnan(sumoTrip.startSpeed):
             attributes["departSpeed"] = str(sumoTrip.startSpeed)
 
-        if not math.isnan(sumoTrip.endSpeed):
+        if sumoTrip.endSpeed is not None and not math.isnan(sumoTrip.endSpeed):
             attributes["arrivalSpeed"] = str(sumoTrip.endSpeed)
 
         routes.append(ET.Element("trip", attributes))
@@ -664,19 +664,20 @@ def addExtraToSUMOVehicles(vehiclesExtra: dict[str, SUMOVehicleExtraData]):
         vehicle.set("arrivalPos", str(arrivalPos))
 
         # Add each stop to the vehicle
-        for stop in vehiclesExtra[sumoVehicleId].stops:
-            stopLane = getLanePositionFromEdgeList(
-                stop.point.latitude,
-                stop.point.longitude,
-                edges
-            ).lane.getID()
+        if vehiclesExtra[sumoVehicleId].stops is not None:
+            for stop in vehiclesExtra[sumoVehicleId].stops:
+                stopLane = getLanePositionFromEdgeList(
+                    stop.point.latitude,
+                    stop.point.longitude,
+                    edges
+                ).lane.getID()
 
-            vehicle.append(
-                ET.Element("stop", {
-                    "lane": stopLane,
-                    "duration": str(stop.duration)
-                })
-            )
+                vehicle.append(
+                    ET.Element("stop", {
+                        "lane": stopLane,
+                        "duration": str(stop.duration)
+                    })
+                )
 
     customRoutesFile.write(
         customRoutesFilePath,
