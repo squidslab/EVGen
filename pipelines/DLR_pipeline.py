@@ -1,5 +1,5 @@
 from arguments import args
-from paths import DLR, OUTPUT
+from paths import DLR
 
 from data.utils import getTrajectoriesBounds, getTrajectoryBatch, buildTrajectoryDataframe
 from data.trajectory_parser.DLR_parser import DLRParser
@@ -53,7 +53,7 @@ def runDLRPipeline():
 
     # Generate virtual dataset using simulation results
     generateVirtualDataset(
-        OUTPUT / args.scenario_name,
         args.scenario_name,
-        SUMOtrajectories
+        SUMOtrajectories,
+        args.keep_energy_steps
     )

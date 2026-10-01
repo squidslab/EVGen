@@ -1,5 +1,5 @@
 from arguments import args
-from paths import PNEUMA, OUTPUT
+from paths import PNEUMA
 
 from data.utils import getTrajectoriesBounds, getTrajectoryBatch, buildTrajectoryDataframe
 from data.trajectory_parser.pNEUMA_parser import pNEUMAParser
@@ -53,7 +53,7 @@ def runPNEUMAPipeline():
 
     # Generate virtual dataset using simulation results
     generateVirtualDataset(
-        OUTPUT / args.scenario_name,
         args.scenario_name,
-        SUMOtrajectories
+        SUMOtrajectories,
+        args.keep_energy_steps
     )

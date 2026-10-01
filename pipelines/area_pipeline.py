@@ -1,5 +1,4 @@
 from arguments import args
-from paths import OUTPUT
 
 from SUMO.sumo import generateSUMO3DNet, generateRandomRoutes, runSimulation
 
@@ -26,6 +25,6 @@ def runAreaPipeline():
 
     # Generate virtual dataset using simulation results
     generateVirtualDataset(
-        OUTPUT / args.scenario_name,
         args.scenario_name,
+        keepEnergySteps=args.keep_energy_steps
     )

@@ -1,5 +1,4 @@
 from arguments import args
-from paths import OUTPUT
 
 from external_requests import getCityBoundingBox
 
@@ -34,6 +33,6 @@ def runCityPipeline():
 
     # Generate virtual dataset using simulation results
     generateVirtualDataset(
-        OUTPUT / args.scenario_name,
         args.scenario_name,
+        keepEnergySteps=args.keep_energy_steps
     )

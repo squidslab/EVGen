@@ -1,5 +1,5 @@
 from arguments import args
-from paths import EVED, EVED_STATIC, OUTPUT
+from paths import EVED, EVED_STATIC
 
 
 from data.utils import getTrajectoriesBounds, getTrajectoryBatch, buildTrajectoryDataframe
@@ -67,7 +67,7 @@ def runEVEDPipeline():
 
     # Generate virtual dataset using simulation results
     generateVirtualDataset(
-        OUTPUT / args.scenario_name,
         args.scenario_name,
-        SUMOtrajectories
+        SUMOtrajectories,
+        args.keep_energy_steps
     )

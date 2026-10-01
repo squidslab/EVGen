@@ -242,12 +242,20 @@ parser.add_argument(
          "vehicle is added to the randomization pool."
 )
 
-# Depart delay argument
 parser.add_argument(
     "--depart-delay",
     type=positiveFloat,
     default=0,
     help="Delay between each simulated vehicle departure."
+)
+
+# Output arguments
+parser.add_argument(
+    "--keep-energy-steps",
+    action="store_true",
+    help="Keeps each simulation step with its associated energy values "
+         "in the resulting virtual dataset. "
+         "By default, energy values are aggregated for each trajectory."
 )
 
 args = parser.parse_args()

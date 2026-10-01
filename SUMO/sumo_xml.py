@@ -65,6 +65,19 @@ def setupSUMOConfig():
         {"value": f"../output/{scenarioName}/tripinfos.xml"}
     )
 
+    if args.keep_energy_steps:
+        ET.SubElement(
+            outputConfig,
+            "battery-output",
+            {"value": f"../output/{scenarioName}/battery.out.xml"}
+        )
+
+        ET.SubElement(
+            outputConfig,
+            "battery-output.precision",
+            {"value": "4"}
+        )
+
     timeConfig = ET.SubElement(sumoConfiguration, "time")
 
     ET.SubElement(
