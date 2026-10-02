@@ -1,0 +1,9 @@
+AUTHOR'S NOTE
+
+This directory could be extended in the future with an abstraction similar to the trajectory parser interface, but dedicated to the export side of the framework.
+
+Such an abstraction could allow each supported dataset to define a complementary exporter responsible for reconstructing its original data format when generating the virtual dataset. The general EVGen pipeline would remain independent of dataset-specific formats, while the information and transformations required to produce an output compatible with the original dataset would be encapsulated within the corresponding exporter.
+
+EVGen already enriches the original datasets by adding information such as the simulated energy consumption of the vehicles. Preserving the original dataset structure and format during export would make this enrichment even more complete, allowing the generated data to retain the original information and remain directly compatible with existing tools and processing workflows developed for that dataset.
+
+Implementing such a mechanism would require additional effort, since each dataset may have its own structure, metadata, formatting requirements, and export conventions. Its implementation is therefore left as a possible future extension of the EVGen framework, at the discretion of future developers.
