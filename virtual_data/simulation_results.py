@@ -12,6 +12,8 @@ def printSimulationStats(SUMOSimStats: SUMOSimStats):
         statName = re.sub(r"(?<!^)(?=[A-Z])", " ", name).title()
         print(f"{statName:<25} {value}")
 
+    print()
+
 # Prints validation error metrics
 def printValidationErrors(MAE: float, RMSE: float, MAPE: float | None = None, SMAPE: float | None = None):
     print("\nValidation Error Metrics")

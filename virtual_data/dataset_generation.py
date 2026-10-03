@@ -31,15 +31,9 @@ def generateVirtualDatasetId(source: str):
 # Generates a virtual dataset using simulation results
 def generateVirtualDataset(sourceScenario: str, trajectories: pd.DataFrame | None = None, keepEnergySteps: bool = False):
     if keepEnergySteps:
-        generateStepDataset(
-            sourceScenario,
-            trajectories
-        )
+        generateStepDataset(sourceScenario)
     else:
-        generateTrajectoryDataset(
-            sourceScenario,
-            trajectories
-        )
+        generateTrajectoryDataset(sourceScenario, trajectories)
 
 # Generates a virtual dataset containing one record for each trajectory
 def generateTrajectoryDataset(sourceScenario: str, trajectories: pd.DataFrame | None = None):
@@ -130,7 +124,7 @@ def generateTrajectoryDataset(sourceScenario: str, trajectories: pd.DataFrame | 
     )
 
 # Generates a virtual dataset containing one record for each simulation step of each trajectory
-def generateStepDataset(sourceScenario: str, trajectories: pd.DataFrame | None = None):
+def generateStepDataset(sourceScenario: str):
     # Parse SUMO tripinfos.xml at given scenario path
     tripInfosFile = ET.parse(OUTPUT / sourceScenario / "tripinfos.xml")
     tripInfos = tripInfosFile.getroot()
@@ -140,23 +134,6 @@ def generateStepDataset(sourceScenario: str, trajectories: pd.DataFrame | None =
         tripInfo.get("id"): tripInfo
         for tripInfo in tripInfos.findall("tripinfo")
     }
-
-    # Create trajectory metadata dictionary if original trajectories are available
-    trajectoryMetadata = (
-        {
-            trajectory["trajectoryId"]: {
-                "startpoint (lat, lon)": json.dumps(asdict(trajectory["startpoint"])),
-                "endpoint (lat, lon)": json.dumps(asdict(trajectory["endpoint"])),
-                "waypoints [(lat, lon)]": json.dumps([
-                    asdict(waypoint)
-                    for waypoint in trajectory["waypoints"]
-                ]),
-            }
-            for trajectory in trajectories.to_dict(orient="records")
-        }
-        if trajectories is not None
-        else None
-    )
 
     # Define output CSV path
     virtualDatasetPath = (
@@ -178,13 +155,6 @@ def generateStepDataset(sourceScenario: str, trajectories: pd.DataFrame | None =
         "totalEnergyConsumed (Wh)",
         "totalEnergyRegenerated (Wh)",
     ]
-
-    if trajectories is not None:
-        fieldnames.extend([
-            "startpoint (lat, lon)",
-            "endpoint (lat, lon)",
-            "waypoints [(lat, lon)]",
-        ])
 
     # Initialize generated records count for logging purposes
     generatedRecordsCount: int = 0
@@ -212,17 +182,6 @@ def generateStepDataset(sourceScenario: str, trajectories: pd.DataFrame | None =
                 if tripInfo is None:
                     continue
 
-                # Retrieve original trajectory metadata if available
-                trajectory = (
-                    trajectoryMetadata.get(trajectoryId)
-                    if trajectoryMetadata is not None
-                    else None
-                )
-
-                # Skip virtual steps for which the original trajectory metadata cannot be found
-                if trajectories is not None and trajectory is None:
-                    continue
-
                 # Retrieve trip info data
                 vehicleType = tripInfo.get("vType")
                 tripDuration = float(tripInfo.get("duration", 0.0))
@@ -248,14 +207,6 @@ def generateStepDataset(sourceScenario: str, trajectories: pd.DataFrame | None =
                     "totalEnergyConsumed (Wh)": float(vehicle.get("totalEnergyConsumed", 0.0)),
                     "totalEnergyRegenerated (Wh)": float(vehicle.get("totalEnergyRegenerated", 0.0)),
                 }
-
-                # Add precomputed trajectory metadata when available
-                if trajectory is not None:
-                    virtualStep.update({
-                        "startpoint (lat, lon)": trajectory["startpoint (lat, lon)"],
-                        "endpoint (lat, lon)": trajectory["endpoint (lat, lon)"],
-                        "waypoints [(lat, lon)]": trajectory["waypoints [(lat, lon)]"],
-                    })
 
                 # Log generated records count periodically
                 generatedRecordsCount += 1

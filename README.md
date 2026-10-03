@@ -130,9 +130,11 @@ By default, the resulting virtual dataset contains one record for each simulated
 * total energy consumption
 * total regenerated energy
 
-The original trajectory metadata, such as starting point, ending point and waypoints, is retained in the resulting dataset.
+The original trajectory metadata, such as starting point, ending point and waypoints, is retained in the trajectory-level representation.
 
-When the `--keep-energy-steps` option is enabled, the dataset is instead generated at the level of individual simulation steps. In this representation, each trajectory is represented by multiple timestamped records corresponding to its simulation steps. In addition to the information normally included in the virtual dataset, each record contains the vehicle speed, acceleration and energy consumed during that individual step.
+When the `--keep-energy-steps` option is enabled, the dataset is instead generated at the level of individual simulation steps. In this representation, each trajectory is represented by multiple timestamped records corresponding to its simulation steps. Each record contains the vehicle speed, acceleration and energy consumed during that individual step, together with the other simulation-derived information normally included in the virtual dataset.
+
+The original trajectory metadata is not retained in this step-level representation. In particular, starting points, ending points and waypoints are included only in the standard trajectory-level representation.
 
 The fields `batteryCapacity`, `totalEnergyConsumed` and `totalEnergyRegenerated` also have a different meaning in this representation. Rather than describing only the final values of the complete trajectory, they describe the state reached at each simulation step: `batteryCapacity` represents the remaining battery capacity, while `totalEnergyConsumed` and `totalEnergyRegenerated` represent the cumulative energy consumed and recovered up to that step.
 
@@ -577,8 +579,9 @@ This option can also be specified in validation mode, when the routes have alrea
 
 ### Important when using the `dataset` scenario
 
-When `--skip-route-generation` is used with the `dataset` scenario, the existing routes must correspond to the same trajectory batch selected through `--trajectory-batch`.
-The generated routes contain the trajectory IDs that are later used to match SUMO simulation results with the original trajectory metadata.
+When `--skip-route-generation` is used with the `dataset` scenario, the existing routes should correspond to the same trajectory batch selected through `--trajectory-batch` when generating the standard trajectory-level virtual dataset.
+
+The generated routes contain the trajectory IDs that are used to match SUMO simulation results with the original trajectory metadata.
 
 For example, if:
 
@@ -586,9 +589,11 @@ For example, if:
 python main.py --scenario dataset --scenario-name eVED --trajectory-batch 2 --skip-route-generation
 ```
 
-is executed, the reused routes must have been generated for **trajectory batch 2**.
+is executed, the reused routes should have been generated for **trajectory batch 2**.
 
-If the routes correspond to a different batch, their trajectory IDs will not match the original trajectories loaded by the current execution. As a result, the simulated trips cannot be associated with the corresponding original trajectory metadata and the generated virtual dataset may be empty.
+If the routes correspond to a different batch, their trajectory IDs will not match the original trajectories loaded by the current execution. When generating the standard trajectory-level virtual dataset, the simulated trips therefore cannot be associated with the corresponding original trajectory metadata and the generated virtual dataset may be empty.
+
+When `--keep-energy-steps` is enabled, the original trajectory metadata is not used to generate the step-based dataset. Therefore, the reused routes do not need to correspond to the selected trajectory batch for this purpose.
 
 ---
 
@@ -829,14 +834,14 @@ python main.py --scenario dataset --scenario-name eVED --keep-energy-steps
 
 By default, the virtual dataset contains one record summarizing the complete simulated trajectory. When `--keep-energy-steps` is enabled, this aggregation is replaced by a step-based representation in which each trajectory is expanded into multiple timestamped records, one for each simulation step.
 
-Each step contains, in addition to the information normally included in the virtual dataset:
+Each step contains, in addition to the simulation-derived information normally included in the virtual dataset:
 
 * the simulation timestamp;
 * the vehicle speed at that step;
 * the vehicle acceleration at that step;
 * the energy consumed during that individual step.
 
-The other information normally produced by the virtual dataset generation process is retained.
+When using the `dataset` scenario, the original trajectory metadata, such as startpoints, endpoints and waypoints, is not retained in the step-based representation. This metadata is available only in the standard trajectory-level representation.
 
 The meaning of some energy-related fields changes in the step-based representation:
 
@@ -912,7 +917,7 @@ python main.py --scenario dataset --scenario-name eVED --keep-energy-steps
 
 This generates a virtual dataset containing the individual timestamped SUMO simulation steps instead of only one summary record per trajectory.
 
-Each step contains the vehicle speed, acceleration and energy consumed during that step, together with the other information normally included in the virtual dataset. The `batteryCapacity`, `totalEnergyConsumed` and `totalEnergyRegenerated` fields describe the battery state and cumulative energy values reached at each point of the trajectory.
+Each step contains the vehicle speed, acceleration and energy consumed during that step, together with the other simulation-derived information normally included in the virtual dataset. The original trajectory metadata, such as startpoints, endpoints and waypoints, is not retained in this representation. The `batteryCapacity`, `totalEnergyConsumed` and `totalEnergyRegenerated` fields describe the battery state and cumulative energy values reached at each point of the trajectory.
 
 ---
 
@@ -934,7 +939,9 @@ python main.py --scenario dataset --scenario-name eVED --skip-route-generation
 
 This reuses both the network and routes.
 
-The reused routes must correspond to trajectory batch 2. Otherwise, the simulated trajectory IDs will not match the original trajectory metadata and the resulting virtual dataset may be empty.
+For the standard trajectory-level representation, the reused routes should correspond to the selected trajectory batch. Otherwise, the simulated trajectory IDs will not match the original trajectory metadata and the resulting virtual dataset may be empty.
+
+When `--keep-energy-steps` is enabled, the original trajectory metadata is not used, so the reused routes do not need to correspond to the selected trajectory batch.
 
 ---
 
@@ -1034,7 +1041,7 @@ The `--scenario` argument currently supports three scenario types:
 
 `--scenario-bounding-box` is required when using the `area` scenario. It defines the geographical area using the format `min-lat,min-lon,max-lat,max-lon`.
 
-When `--skip-route-generation` is specified, network generation is also skipped. When using this option with the `dataset` scenario, the reused routes must correspond to the selected `--trajectory-batch`; otherwise, the simulated trajectory IDs will not match the original trajectory metadata and the resulting virtual dataset may be empty.
+When `--skip-route-generation` is specified, network generation is also skipped. When using this option with the `dataset` scenario, the reused routes should correspond to the selected `--trajectory-batch` when generating the standard trajectory-level virtual dataset. If a different batch is used, the simulated trajectory IDs may not match the original trajectory metadata and the resulting trajectory-level virtual dataset may be empty. When `--keep-energy-steps` is enabled, the original trajectory metadata is not used and this batch correspondence is not required for the step-based dataset.
 
 `--random-veh-types` is disabled by default. When enabled, vehicles without a known model are assigned specific SUMO electric vehicle models in a randomized but balanced distribution instead of using the generic `ev_generic` type.
 
@@ -1042,7 +1049,7 @@ When `--skip-route-generation` is specified, network generation is also skipped.
 
 For eVED, explicitly identified electric vehicles always use the `leaf_2013` SUMO vehicle type, regardless of the custom vehicle or randomization options.
 
-`--keep-energy-steps` is disabled by default and is available for all scenarios. When enabled, the virtual dataset contains one timestamped record for each SUMO simulation step rather than a single summary record for each trajectory. In addition to the information normally included in the virtual dataset, each step contains speed, acceleration and the energy consumed during that step. The `batteryCapacity`, `totalEnergyConsumed` and `totalEnergyRegenerated` fields describe the progressive battery and energy state throughout the trajectory.
+`--keep-energy-steps` is disabled by default and is available for all scenarios. When enabled, the virtual dataset contains one timestamped record for each SUMO simulation step rather than a single summary record for each trajectory. In addition to the simulation-derived information normally included in the virtual dataset, each step contains speed, acceleration and the energy consumed during that step. For the `dataset` scenario, original trajectory metadata such as startpoints, endpoints and waypoints is not retained in this representation and is available only in the trajectory-level representation. The `batteryCapacity`, `totalEnergyConsumed` and `totalEnergyRegenerated` fields describe the progressive battery and energy state throughout the trajectory.
 
 ---
 
